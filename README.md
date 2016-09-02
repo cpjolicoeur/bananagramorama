@@ -4,6 +4,27 @@
 
 Goal is to use 100% (or close to it) Elm on the front-end and Elixir w/ [Phoenix Channels][4] on the back-end for real-time game support.
 
+## Development
+
+To install prerequisites run:
+
+    $ mix deps.get
+    $ npm install
+
+First, configure your database in config/dev.exs and run:
+
+    $ cp config/dev.exs.sample config/dev.exs
+    $ vim config/dev.exs
+    $ mix ecto.create
+
+To run the Phoenix application:
+
+    $ mix phoenix.server
+
+You can also run the app inside IEx:
+
+    $ iex -S mix phoenix.server
+
 ## Notes
 
 * [Previous online version][5] of the game (retired in 2013)
