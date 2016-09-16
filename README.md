@@ -6,15 +6,24 @@ Goal is to use 100% (or close to it) Elm on the front-end and Elixir w/ [Phoenix
 
 ## Development
 
-To install prerequisites run:
+Prerequisites
+  - [Elixir v1.3][2]
+  - [Elm][3]
 
-    $ mix deps.get
-    $ npm install
-
-First, configure your database in config/dev.exs and run:
+Setup you configuration file:
 
     $ cp config/dev.exs.sample config/dev.exs
     $ vim config/dev.exs
+    
+To install dependencies run:
+
+    $ mix deps.get
+    $ npm install
+    $ cd web/elm
+    $ elm package install 
+    
+Be sure to configure your database information. Then run:
+
     $ mix ecto.create
 
 To run the Phoenix application:
