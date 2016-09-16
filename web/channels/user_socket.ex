@@ -2,7 +2,7 @@ defmodule BananaGrams.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "room:*", BananaGrams.RoomChannel
+  # channel "room:*", BananaGrams.RoomChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
