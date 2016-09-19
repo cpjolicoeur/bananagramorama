@@ -9473,22 +9473,51 @@ var _shmookey$cmd_extra$Cmd_Extra$message = function (x) {
 		_elm_lang$core$Task$succeed(x));
 };
 
-var _user$project$Main$viewMessages = function (msg) {
+var _user$project$Main$viewMessage = function (chatMessage) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_elm_lang$html$Html$text(msg)
+				_elm_lang$html$Html$text(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					chatMessage.username,
+					A2(_elm_lang$core$Basics_ops['++'], ': ', chatMessage.body)))
 			]));
 };
-var _user$project$Main$chatMessageDecoder = A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _elm_lang$core$Json_Decode$string);
+var _user$project$Main$viewMessages = function (model) {
+	return A2(
+		_elm_lang$core$List$map,
+		_user$project$Main$viewMessage,
+		_elm_lang$core$List$reverse(model.messages));
+};
+var _user$project$Main$setDefaultUsername = function (name) {
+	return _elm_lang$core$String$isEmpty(name) ? 'Anonymous' : name;
+};
 var _user$project$Main$socketServer = 'ws://localhost:4000/socket/websocket';
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {newMessage: a, messages: b, socket: c};
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {newMessage: a, messages: b, socket: c, username: d};
 	});
+var _user$project$Main$ChatMessage = F2(
+	function (a, b) {
+		return {username: a, body: b};
+	});
+var _user$project$Main$chatMessageDecoder = A3(
+	_elm_lang$core$Json_Decode$object2,
+	_user$project$Main$ChatMessage,
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'user', _elm_lang$core$Json_Decode$string),
+				_elm_lang$core$Json_Decode$succeed('anonymous')
+			])),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _elm_lang$core$Json_Decode$string));
+var _user$project$Main$SetUsername = function (a) {
+	return {ctor: 'SetUsername', _0: a};
+};
 var _user$project$Main$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
 };
@@ -9496,6 +9525,14 @@ var _user$project$Main$update = F2(
 	function (msg, model) {
 		var _p0 = msg;
 		switch (_p0.ctor) {
+			case 'SetUsername':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{username: _p0._0}),
+					_elm_lang$core$Native_List.fromArray(
+						[]));
 			case 'JoinChannel':
 				var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby');
 				var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.socket);
@@ -9543,6 +9580,13 @@ var _user$project$Main$update = F2(
 							ctor: '_Tuple2',
 							_0: 'body',
 							_1: _elm_lang$core$Json_Encode$string(model.newMessage)
+						},
+							{
+							ctor: '_Tuple2',
+							_0: 'user',
+							_1: _elm_lang$core$Json_Encode$string(
+								_user$project$Main$setDefaultUsername(
+									_elm_lang$core$String$trim(model.username)))
 						}
 						]));
 				var push$ = A2(
@@ -9589,7 +9633,8 @@ var _user$project$Main$initModel = {
 	newMessage: '',
 	messages: _elm_lang$core$Native_List.fromArray(
 		[]),
-	socket: _user$project$Main$initSocket
+	socket: _user$project$Main$initSocket,
+	username: 'Anonymous'
 };
 var _user$project$Main$SendMessage = {ctor: 'SendMessage'};
 var _user$project$Main$SetNewMessage = function (a) {
@@ -9603,6 +9648,28 @@ var _user$project$Main$view = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(
+				_elm_lang$html$Html$label,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$class('chat-label')
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('User Name:')
+					])),
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('text'),
+						_elm_lang$html$Html_Attributes$class('chat-username'),
+						_elm_lang$html$Html_Attributes$id('chat-username'),
+						_elm_lang$html$Html_Attributes$value(model.username),
+						_elm_lang$html$Html_Events$onInput(_user$project$Main$SetUsername)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
 					[
@@ -9610,10 +9677,7 @@ var _user$project$Main$view = function (model) {
 						_elm_lang$html$Html_Attributes$class('chat-window'),
 						_elm_lang$html$Html_Attributes$id('messages')
 					]),
-				A2(
-					_elm_lang$core$List$map,
-					_user$project$Main$viewMessages,
-					_elm_lang$core$List$reverse(model.messages))),
+				_user$project$Main$viewMessages(model)),
 				A2(
 				_elm_lang$html$Html$form,
 				_elm_lang$core$Native_List.fromArray(

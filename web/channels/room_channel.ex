@@ -9,8 +9,8 @@ defmodule BananaGrams.RoomChannel do
     {:error, %{reason: "unauthorized"}}
   end
 
-  def handle_in("new_msg", %{"body" => body}, socket) do
-    broadcast! socket, "new_msg", %{body: body}
+  def handle_in("new_msg", %{"body" => body, "user" => user}, socket) do
+    broadcast! socket, "new_msg", %{body: body, user: user}
     {:noreply, socket}
   end
 

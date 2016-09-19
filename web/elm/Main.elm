@@ -10,6 +10,7 @@ import Json.Decode as JD exposing ((:=))
 import Phoenix.Socket
 import Phoenix.Push
 import Phoenix.Channel
+import String exposing (..)
 
 
 ----- ## Model
@@ -17,8 +18,15 @@ import Phoenix.Channel
 
 type alias Model =
     { newMessage : String
-    , messages : List String
+    , messages : List ChatMessage
     , socket : Phoenix.Socket.Socket Msg
+    , username : String
+    }
+
+
+type alias ChatMessage =
+    { username : String
+    , body : String
     }
 
 
@@ -27,6 +35,7 @@ initModel =
     { newMessage = ""
     , messages = []
     , socket = initSocket
+    , username = "Anonymous"
     }
 
 
@@ -48,6 +57,7 @@ type Msg
     | SendMessage
     | ReceiveChatMessage JE.Value
     | PhoenixMsg (Phoenix.Socket.Msg Msg)
+    | SetUsername String
 
 
 
@@ -57,6 +67,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SetUsername name ->
+            { model | username = name } ! []
+
         JoinChannel ->
             let
                 channel =
@@ -81,7 +94,7 @@ update msg model =
         SendMessage ->
             let
                 payload =
-                    JE.object [ ( "body", JE.string model.newMessage ) ]
+                    JE.object [ ( "body", JE.string model.newMessage ), ( "user", JE.string (setDefaultUsername <| String.trim model.username) ) ]
 
                 push' =
                     Phoenix.Push.init "new_msg" "room:lobby"
@@ -100,9 +113,23 @@ update msg model =
                 ( { model | socket = socket }, Cmd.map PhoenixMsg command )
 
 
-chatMessageDecoder : JD.Decoder String
+chatMessageDecoder : JD.Decoder ChatMessage
 chatMessageDecoder =
-    "body" := JD.string
+    JD.object2 ChatMessage
+        (JD.oneOf
+            [ ("user" := JD.string)
+            , JD.succeed "anonymous"
+            ]
+        )
+        ("body" := JD.string)
+
+
+setDefaultUsername : String -> String
+setDefaultUsername name =
+    if String.isEmpty name then
+        "Anonymous"
+    else
+        name
 
 
 
@@ -122,8 +149,9 @@ main =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [ type' "text", class "chat-window", id "messages" ]
-            (List.map viewMessages (List.reverse model.messages))
+        [ label [ class "chat-label" ] [ text "User Name:" ]
+        , input [ type' "text", class "chat-username", id "chat-username", value model.username, onInput SetUsername ] []
+        , div [ type' "text", class "chat-window", id "messages" ] (viewMessages model)
         , form [ onSubmit SendMessage ]
             [ input [ type' "text", class "chat-input", id "chat-input", placeholder "New Message", onInput SetNewMessage, value model.newMessage ] []
             ]
@@ -135,9 +163,14 @@ init =
     ( initModel, Cmd.Extra.message JoinChannel )
 
 
-viewMessages : String -> Html msg
-viewMessages msg =
-    div [] [ text msg ]
+viewMessages : Model -> List (Html msg)
+viewMessages model =
+    List.map viewMessage (List.reverse model.messages)
+
+
+viewMessage : ChatMessage -> Html msg
+viewMessage chatMessage =
+    div [] [ text (chatMessage.username ++ ": " ++ chatMessage.body) ]
 
 
 subscriptions : Model -> Sub Msg
